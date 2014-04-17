@@ -4,12 +4,16 @@ require 5.005_62;
 
 require Exporter;
 
+#Perl类（包）的继承是通过@ISA数组来实现的
+#简单来说，Perl把它看作目录名的特殊数组，与@INC数组类似（@INC数组是包含引用路径）
+#当Perl在当前类（包）中无法找到所需方法时，便会在该数组列出的类中查找。
 our @ISA = qw(Exporter);
 
 # Items to export into callers namespace by default. Note: do not export
 # names by default without a very good reason. Use EXPORT_OK instead.
 # Do not simply export all your public functions/methods/constants.
 
+#该类默认导出的符号
 our @EXPORT = (
 	'$config_directory',
 	'$var_directory',
@@ -51,6 +55,8 @@ my %oldsyms = %Webmin::API::;
 
 # Preloaded methods go here.
 $main::no_acl_check++;
+
+#/etc/webmin/miniserv.conf 是主配置文件
 $ENV{'WEBMIN_CONFIG'} ||= "/etc/webmin";
 $ENV{'WEBMIN_VAR'} ||= "/var/webmin";
 open(MINISERV, $ENV{'WEBMIN_CONFIG'}."/miniserv.conf") ||
@@ -64,14 +70,20 @@ while(<MINISERV>) {
 		}
 	}
 close(MINISERV);
+
+#找到了webmin_root也就是所有perl代码的地方，缺省为/usr/libexec/webmin
 $webmin_root || die "Could not find Webmin root directory";
 chdir($webmin_root);
+
+#将脚本名移到$webmin_root下, 作用未知
 if ($0 =~ /\/([^\/]+)$/) {
 	$0 = $webmin_root."/".$1;
 	}
 else {
 	$0 = $webmin_root."/api.pl";	# Fake name
 	}
+
+#执行web-lib.pl 和 web-lib-funcs.pl
 require './web-lib.pl';
 &init_config();
 
@@ -81,11 +93,14 @@ foreach my $lib ("$webmin_root/web-lib.pl",
 	open(WEBLIB, $lib);
 	while(<WEBLIB>) {
 		if (/^sub\s+([a-z0-9\_]+)/i) {
+# 将web-lib.pl 和 web-lib-funcs.pl 中所有的函数导出
 			push(@EXPORT, $1);
 			}
 		}
 	close(WEBLIB);
 	}
+
+#按要求导出符号，也就是在use的时候必须要特殊制定qw()  
 our @EXPORT_OK = ( @EXPORT );
 
 1;
